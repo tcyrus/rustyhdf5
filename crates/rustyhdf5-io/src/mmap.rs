@@ -3,7 +3,7 @@
 //! Provides [`MmapReader`] for read-only memory-mapped files and
 //! [`MmapReadWrite`] for writable memory-mapped files via `memmap2`.
 
-use memmap2::{Mmap, MmapMut};
+use memmap2::{Advice, Mmap, MmapMut};
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -62,21 +62,19 @@ impl MmapReader {
     /// This is a hint to the kernel to start reading the data into memory.
     /// It is safe to call on any platform; on unsupported platforms it is a no-op.
     #[cfg(unix)]
-    pub fn advise_willneed(&self, offset: usize, len: usize) {
+    pub fn advise_willneed(&self, offset: usize, len: usize) -> io::Result<()> {
         let actual_len = len.min(self.mmap.len().saturating_sub(offset));
         if actual_len == 0 {
-            return;
+            return Ok(());
         }
-        // SAFETY: We are advising on a range within our valid mapping.
-        unsafe {
-            let ptr = self.mmap.as_ptr().add(offset);
-            libc::madvise(ptr as *mut libc::c_void, actual_len, libc::MADV_WILLNEED);
-        }
+        self.mmap.advise_range(Advice::WillNeed, offset, actual_len)
     }
 
     /// No-op on non-Unix platforms.
     #[cfg(not(unix))]
-    pub fn advise_willneed(&self, _offset: usize, _len: usize) {}
+    pub fn advise_willneed(&self, _offset: usize, _len: usize) -> io::Result<()> {
+        Ok(())
+    }
 }
 
 impl HDF5Read for MmapReader {

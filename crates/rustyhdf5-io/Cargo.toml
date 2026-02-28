@@ -12,7 +12,6 @@ categories = ["filesystem", "science"]
 [dependencies]
 rustyhdf5-format = { path = "../rustyhdf5-format", version = "1.93.0" }
 memmap2 = { version = "0.9", optional = true }
-libc = { version = "0.2", optional = true }
 tokio = { version = "1", features = ["fs", "io-util"], optional = true }
 reqwest = { version = "0.12", features = ["json"], optional = true }
 serde = { version = "1", features = ["derive"], optional = true }
@@ -23,6 +22,6 @@ tokio = { version = "1", features = ["full"] }
 
 [features]
 default = []
-mmap = ["memmap2", "libc"]
+mmap = ["memmap2"]
 async = ["tokio"]
 hsds = ["reqwest", "serde", "serde_json", "async"]
